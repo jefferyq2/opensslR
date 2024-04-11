@@ -1,0 +1,13 @@
+name: Run a recheck
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  recheck:
+    runs-on: ubuntu-latest
+    container: ghcr.io/r-universe-org/recheck
+    steps:
+      - name: clone
+        run: git clone --depth=1 https://github.com/${{github.repository}}
