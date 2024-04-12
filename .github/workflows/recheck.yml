@@ -12,6 +12,9 @@ jobs:
       - name: clone
         run: git clone --depth=1 https://github.com/${{github.repository}} source
 
-      - name: install dependencies
+      - name: download dependencies
         run: recheck::install_recheck_deps('source')
         shell: Rscript {0}
+
+      - name: build source package
+        run: R CMD build source
