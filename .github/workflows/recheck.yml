@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  recheck:
+  prepare:
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
     env:
@@ -28,6 +28,22 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            pkglib
+            ${{github.workspace}}/pkglib
             checkdir
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
+
+  checks:
+    runs-on: ubuntu-latest
+    container: ghcr.io/r-universe-org/recheck
+    strategy:
+      matrix:
+        check: [ 'old', 'new' ]
+    env:
+      R_LIBS_USER: ${{github.workspace}}/pkglib
+    steps:
+      - name: Download
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
+
+
