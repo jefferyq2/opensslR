@@ -4,12 +4,13 @@ on:
   push:
   pull_request:
 
+env:
+  R_LIBS_USER: ${{github.workspace}}/pkglib
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
-    env:
-      R_LIBS_USER: ${{github.workspace}}/pkglib
     steps:
       - name: prepare
         run: |
@@ -34,7 +35,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            ${{github.workspace}}/pkglib
+            pkglib
             checkdir
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
 
@@ -45,13 +46,14 @@ jobs:
     strategy:
       matrix:
         check: [ 'old', 'new' ]
-    env:
-      R_LIBS_USER: ${{github.workspace}}/pkglib
     steps:
       - name: Download
         uses: actions/cache/restore@v4
         with:
           path: |
-            ${{github.workspace}}/pkglib
+            pkglib
             checkdir
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
+
+
+
