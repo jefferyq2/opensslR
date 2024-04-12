@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
     env:
-      R_LIBS_USER: pkglib
+      R_LIBS_USER: ${{github.workspace}}/pkglib
     steps:
       - name: clone
         run: git clone --depth=1 https://github.com/${{github.repository}} source
@@ -24,7 +24,7 @@ jobs:
           R CMD build source
           mv *.tar.gz checkdir/
 
-      - name: "Download package library"
+      - name: Save package and library
         uses: actions/cache/save@v4
         with:
           path: |
