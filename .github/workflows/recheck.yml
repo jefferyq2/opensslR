@@ -8,6 +8,8 @@ jobs:
   recheck:
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
+    env:
+      R_LIBS_USER: pkglib
     steps:
       - name: clone
         run: git clone --depth=1 https://github.com/${{github.repository}} source
@@ -17,4 +19,15 @@ jobs:
         shell: Rscript {0}
 
       - name: build source package
-        run: R CMD build source
+        run: |
+          mkdir checkdir
+          R CMD build source
+          mv *.tar.gz checkdir/
+
+      - name: "Download package library"
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            pkglib
+            checkdir
+          key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
