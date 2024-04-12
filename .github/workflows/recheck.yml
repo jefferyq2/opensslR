@@ -33,6 +33,7 @@ jobs:
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
 
   checks:
+    needs: prepare
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
     strategy:
