@@ -47,13 +47,23 @@ jobs:
       matrix:
         check: [ 'old', 'new' ]
     steps:
-      - name: Download
+      - name: Download package and library
         uses: actions/cache/restore@v4
         with:
           path: |
             pkglib
             checkdir
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
+
+      - name: Get old version of package
+        if: matrix.check == 'old'
+        shell: Rscript {0}
+        run: |
+          setwd("checkdir")
+          pkg <- sub("_.*", "", list.files())
+          unlink("*.tar.gz")
+          download.packages(pkg, ".")
+
 
 
 
