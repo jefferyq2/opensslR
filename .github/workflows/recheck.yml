@@ -11,6 +11,11 @@ jobs:
     env:
       R_LIBS_USER: ${{github.workspace}}/pkglib
     steps:
+      - name: prepare
+        run: |
+          mkdir -p $R_LIBS_USER
+          R -e ".libPaths()"
+
       - name: clone
         run: git clone --depth=1 https://github.com/${{github.repository}} source
 
@@ -23,6 +28,7 @@ jobs:
           mkdir checkdir
           R CMD build source
           mv *.tar.gz checkdir/
+          rm -Rf source
 
       - name: Save package and library
         uses: actions/cache/save@v4
@@ -45,6 +51,7 @@ jobs:
       - name: Download
         uses: actions/cache/restore@v4
         with:
+          path: |
+            ${{github.workspace}}/pkglib
+            checkdir
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
-
-
