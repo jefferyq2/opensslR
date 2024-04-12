@@ -9,6 +9,7 @@ env:
 
 jobs:
   prepare:
+    name: Get package and dependencies
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
     steps:
@@ -62,8 +63,13 @@ jobs:
           setwd("checkdir")
           pkg <- sub("_.*", "", list.files())
           unlink("*.tar.gz")
-          download.packages(pkg, ".")
+          download.packages(pkg, ".", repos = "https://cran.r-project.org")
 
-
+      - name: Run checks
+        shell: Rscript {0}
+        run: |
+          tools::check_packages_in_dir("checkdir",
+            reverse = list(repos = 'https://cloud.r-project.org, which = "strong"),
+            Ncpus = parallel::detectCores())
 
 
