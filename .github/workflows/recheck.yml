@@ -10,4 +10,8 @@ jobs:
     container: ghcr.io/r-universe-org/recheck
     steps:
       - name: clone
-        run: git clone --depth=1 https://github.com/${{github.repository}}
+        run: git clone --depth=1 https://github.com/${{github.repository}} source
+
+      - name: install dependencies
+        run: recheck::install_recheck_deps('source')
+        shell: Rscript {0}
