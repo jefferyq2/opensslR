@@ -27,17 +27,27 @@ jobs:
 
       - name: build source package
         run: |
-          mkdir checkdir
+          mkdir newpkg
           R CMD build source
-          mv *.tar.gz checkdir/
+          mv *.tar.gz newpkg/
           rm -Rf source
+
+
+      - name: Get old version of package
+        if: matrix.check == 'old'
+        shell: Rscript {0}
+        run: |
+          dir.create("oldpkg")
+          pkg <- sub("_.*", "", list.files("newpkg"))
+          download.packages(pkg, "oldpkg", repos = "https://cran.r-project.org")
 
       - name: Save package and library
         uses: actions/cache/save@v4
         with:
           path: |
             pkglib
-            checkdir
+            newpkg
+            oldpkg
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
 
   checks:
@@ -46,30 +56,19 @@ jobs:
     container: ghcr.io/r-universe-org/recheck
     strategy:
       matrix:
-        check: [ 'old', 'new' ]
+        check: [ 'oldpkg', 'newpkg' ]
     steps:
       - name: Download package and library
         uses: actions/cache/restore@v4
         with:
           path: |
             pkglib
-            checkdir
+            newpkg
+            oldpkg
           key: ${{ runner.os }}-${{ github.run_id }}-${{github.run_attempt}}
-
-      - name: Get old version of package
-        if: matrix.check == 'old'
-        shell: Rscript {0}
-        run: |
-          setwd("checkdir")
-          pkg <- sub("_.*", "", list.files())
-          unlink("*.tar.gz")
-          download.packages(pkg, ".", repos = "https://cran.r-project.org")
 
       - name: Run checks
         shell: Rscript {0}
         run: |
-          tools::check_packages_in_dir("checkdir",
-            reverse = list(repos = 'https://cloud.r-project.org, which = "strong"),
-            Ncpus = parallel::detectCores())
-
-
+          reverse <- reverse = list(repos = 'https://cloud.r-project.org, which = "strong")
+          tools::check_packages_in_dir("${{matrix.check}}", reverse = reverse, Ncpus = parallel::detectCores())
