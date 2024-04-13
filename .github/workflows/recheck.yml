@@ -70,5 +70,20 @@ jobs:
       - name: Run checks
         shell: Rscript {0}
         run: |
+          checkdir <- "${{matrix.check}}"
           reverse <- list(repos = 'https://cloud.r-project.org, which = "strong")
-          tools::check_packages_in_dir("${{matrix.check}}", reverse = reverse, Ncpus = parallel::detectCores())
+          tools::check_packages_in_dir(checkdir, reverse = reverse, Ncpus = parallel::detectCores())
+          details <- tools::check_packages_in_dir_details(checkdir)
+          write.csv(details, file.path(checkdir, 'check-details.csv'))
+          writeLines(paste(format(details), collapse = "\n\n"), file.path(checkdir, 'check-details.txt'))
+          tools::summarize_check_packages_in_dir_results(checkdir)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: checklogs
+          path: |
+            ${{matrix.check}}/*/*.log
+            ${{matrix.check}}/*/*.out
+            ${{matrix.check}}/*/*.Rout
+            ${{matrix.check}}/*/*.fail
+            ${{matrix.check}}/check-details.*
