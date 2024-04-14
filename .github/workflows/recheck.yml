@@ -9,9 +9,12 @@ env:
 
 jobs:
   prepare:
-    name: Get package and dependencies
+    name: Prepare dependencies
     runs-on: ubuntu-latest
     container: ghcr.io/r-universe-org/recheck
+    outputs:
+      oldfile: ${{ steps.filenames.outputs.oldfile }}
+      newfile: ${{ steps.filenames.outputs.newfile }}
     steps:
       - name: prepare
         run: |
@@ -32,14 +35,18 @@ jobs:
           mv *.tar.gz newpkg/
           rm -Rf source
 
-
       - name: Get old version of package
-        if: matrix.check == 'old'
         shell: Rscript {0}
         run: |
           dir.create("oldpkg")
           pkg <- sub("_.*", "", list.files("newpkg"))
           download.packages(pkg, "oldpkg", repos = "https://cran.r-project.org")
+
+      - name: Get file names
+        id: filenames
+        run: |
+          echo "oldfile=$(cd oldpkg; echo *.tar.gz)" >> "$GITHUB_OUTPUT"
+          echo "newfile=$(cd newpkg; echo *.tar.gz)" >> "$GITHUB_OUTPUT"
 
       - name: Save package and library
         uses: actions/cache/save@v4
@@ -53,6 +60,7 @@ jobs:
   checks:
     needs: prepare
     runs-on: ubuntu-latest
+    name: Recheck ${{matrix.check == 'oldpkg' && needs.prepare.outputs.oldfile || needs.prepare.outputs.newfile}} (${{matrix.check}})
     container: ghcr.io/r-universe-org/recheck
     strategy:
       matrix:
@@ -81,10 +89,29 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: checklogs
+          name: ${{matrix.check}}-checklogs
           path: |
             ${{matrix.check}}/*/*.log
             ${{matrix.check}}/*/*.out
             ${{matrix.check}}/*/*.Rout
             ${{matrix.check}}/*/*.fail
             ${{matrix.check}}/check-details.*
+
+  results:
+    name: Compare results
+    needs: checks
+    runs-on: ubuntu-latest
+    container: ghcr.io/r-hub/r-minimal/r-minimal:latest
+    steps:
+      - name: Download log files
+        uses: actions/download-artifact@v4
+
+      - name: Compare results
+        shell: Rscript {0}
+        run: |
+          changes <- tools::check_packages_in_dir_changes("newpkg-checklogs", "oldpkg-checklogs")
+          if(nrow(changes)){
+            print(changes)
+          } else {
+            cat("No changes, all good\n")
+          }
