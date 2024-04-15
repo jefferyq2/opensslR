@@ -1,6 +1,12 @@
 on:
-  push:
   workflow_dispatch:
+    inputs:
+      which:
+        type: choice
+        description: Which dependents to check
+        options:
+        - strong
+        - most
 
 name: Run a recheck
 
