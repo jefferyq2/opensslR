@@ -7,4 +7,4 @@ name: Run a recheck
 jobs:
   recheck:
     name: Run a recheck
-    uses: r-devel/recheck/.github/workflows/recheck.yml@HEAD
+    uses: r-devel/recheck/.github/workflows/recheck.yml@v1
